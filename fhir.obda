@@ -1,0 +1,44 @@
+[PrefixDeclaration]
+:		http://hl7.org/fhir/fhir.ttl#
+owl:		http://www.w3.org/2002/07/owl#
+rdf:		http://www.w3.org/1999/02/22-rdf-syntax-ns#
+fhir:		http://hl7.org/fhir/
+rdfs:		http://www.w3.org/2000/01/rdf-schema#
+
+[SourceDeclaration]
+sourceUri	datasource1
+connectionUrl	jdbc:postgresql://localhost:5432/ohdsi
+username	ohdsi
+password	ohdsi
+driverClass	org.postgresql.Driver
+
+[MappingDeclaration] @collection [[
+mappingId	Person
+target		fhir:Patient/{person_id} a fhir:Patient ; fhir:Patient.gender fhir:Coding/{gender_concept_id} ; fhir:Patient.birthDate.value "{year_of_birth}-{month_of_birth}-{day_of_birth}"^^xsd:date . 
+source		select "person_id", "gender_concept_id", "year_of_birth", "month_of_birth", "day_of_birth", "time_of_birth", "race_concept_id", "ethnicity_concept_id", "location_id", "provider_id", "care_site_id", "person_source_value", "gender_source_value", "gender_source_concept_id", "race_source_value", "race_source_concept_id", "ethnicity_source_value", "ethnicity_source_concept_id" from "public"."person"
+
+mappingId	Condition Occurrence
+target		fhir:Condition/{condition_occurrence_id} a fhir:Condition ; fhir:Condition.subject fhir:Patient/{person_id} ; fhir:Condition.code fhir:Coding/{condition_concept_id} ; fhir:Condition.category fhir:Coding/{condition_type_concept_id} ; fhir:Condition.onsetPeriod.Period.start {condition_start_date}^^xsd:dateTime ; fhir:Condition.onsetPeriod.Period.end {condition_end_date}^^xsd:dateTime . 
+source		select "condition_occurrence_id", "person_id", "condition_concept_id", "condition_start_date", "condition_end_date", "condition_type_concept_id", "stop_reason", "provider_id", "visit_occurrence_id", "condition_source_value", "condition_source_concept_id" from "public"."condition_occurrence"
+
+mappingId	Drug Exposure
+target		fhir:MedicationAdministration/{drug_exposure_id} a fhir:MedicationAdministration ; fhir:MedicationAdministration.subject fhir:Patient/{person_id} ; fhir:MedicationAdministration.medicationReference fhir:Coding/{drug_concept_id} ; fhir:MedicationAdministration.effectivePeriod.Period.start {drug_exposure_start_date}^^xsd:dateTime ; fhir:MedicationAdministration.effectivePeriod.Period.end {drug_exposure_end_date}^^xsd:dateTime ; fhir:MedicationAdministration.category fhir:Coding/{drug_type_concept_id} ; fhir:MedicationAdministration.dosage.dose.value {quantity}^^xsd:string . 
+source		select "drug_exposure_id", "person_id", "drug_concept_id", "drug_exposure_start_date", "drug_exposure_end_date", "drug_type_concept_id", "stop_reason", "refills", "quantity", "days_supply", "sig", "route_concept_id", "effective_drug_dose", "dose_unit_concept_id", "lot_number", "provider_id", "visit_occurrence_id", "drug_source_value", "drug_source_concept_id", "route_source_value", "dose_unit_source_value" from "public"."drug_exposure"
+
+mappingId	Observation
+target		fhir:Observation/{observation_id} a fhir:Observation ; fhir:Observation.status.value "final"^^xsd:string ; fhir:Observation.code fhir:Coding/{observation_concept_id} ; fhir:Observation.subject fhir:Patient/{person_id} ; fhir:Observation.category fhir:Coding/{observation_type_concept_id} ; fhir:Observation.effectiveDateTime.value {observation_date}^^xsd:dateTime ; fhir:Observation.performer fhir:Coding/{provider_id} ; fhir:Observation.encounter fhir:Coding/{visit_occurrence_id} . 
+source		select "observation_id", "person_id", "observation_concept_id", "observation_date", "observation_time", "observation_type_concept_id", "value_as_number", "value_as_string", "value_as_concept_id", "qualifier_concept_id", "unit_concept_id", "provider_id", "visit_occurrence_id", "observation_source_value", "observation_source_concept_id", "unit_source_value", "qualifier_source_value" from "public"."observation"
+
+mappingId	Concept
+target		fhir:Coding/{concept_id} a fhir:Coding ; fhir:Coding.code.value {concept_code}^^xsd:string ; fhir:Coding.display.value {concept_name}^^xsd:string ; fhir:Coding.system.value {vocabulary_id}^^xsd:string . 
+source		select "concept_id", "concept_name", "domain_id", "vocabulary_id", "concept_class_id", "standard_concept", "concept_code", "valid_start_date", "valid_end_date", "invalid_reason" from "public"."concept"
+
+mappingId	Concept Relationship
+target		fhir:ConceptMap/{concept_id_1}/{concept_id_2} a fhir:ConceptMap ; fhir:ConceptMap.sourceUri fhir:Coding/{concept_id_1} ; fhir:ConceptMap.targetUri fhir:Coding/{concept_id_2} ; fhir:ConceptMap.group.element.target.equivalence.value {relationship_id}^^xsd:string . 
+source		select "concept_id_1", "concept_id_2", "relationship_id", "valid_start_date", "valid_end_date", "invalid_reason" from "public"."concept_relationship"
+
+mappingId	Concept Ancestor
+target		fhir:ConceptMap/{ancestor_concept_id}/{descendant_concept_id} a fhir:ConceptMap ; fhir:ConceptMap.group.element.target.equivalence.value "descendant"^^xsd:string ; fhir:ConceptMap.sourceUri fhir:Coding/{ancestor_concept_id} ; fhir:ConceptMap.targetUri fhir:Coding/{descendant_concept_id} . 
+source		select "ancestor_concept_id", "descendant_concept_id", "min_levels_of_separation", "max_levels_of_separation" from "public"."concept_ancestor"
+]]
+
